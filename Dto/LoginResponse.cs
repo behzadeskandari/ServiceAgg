@@ -9,6 +9,7 @@ public class LoginResponse
     /// نام کاربری
     /// </summary>
     public string Username { get; set; } = "";
+    public string Role { get; set; } = "";
     /// <summary>
     /// تاریخ انقضای توکن
     /// </summary>

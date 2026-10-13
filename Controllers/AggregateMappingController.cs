@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ServiceAggregator.Api.Data;
 using ServiceAggregator.Api.Dto;
@@ -13,6 +14,7 @@ namespace ServiceAggregator.Api.Controllers
         private readonly ServiceAggregatorContext _context;
         public AggregateMappingController(ServiceAggregatorContext context) => _context = context;
         [HttpPost("add")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> AddAggregateMapping([FromBody] AddAggregateMapping addAggregateMapping)
         {
             var newAggregateMapping = new AggregateMapping()
@@ -30,6 +32,7 @@ namespace ServiceAggregator.Api.Controllers
             return Ok(addAggregateMapping);
         }
         [HttpPost("update")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateAggregateMapping([FromBody] UpdateAggregateMapping updateAggregateMapping)
         {
             var aggregateMapping = await _context.AggregateMappings.FirstOrDefaultAsync(r => r.Id == updateAggregateMapping.Id);
@@ -45,6 +48,7 @@ namespace ServiceAggregator.Api.Controllers
             return Ok(aggregateMapping);
         }
         [HttpPost("delete")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteAggregateMapping([FromBody] DeleteAggregateMapping deleteAggregateMapping)
         {
             var aggregateMapping = await _context.AggregateMappings.FirstOrDefaultAsync(r => r.Id == deleteAggregateMapping.Id);

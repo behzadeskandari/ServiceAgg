@@ -48,6 +48,10 @@ public class Service
     /// فرمت احراز هویت
     /// </summary>
     public string? AuthenticationFormat { get; set; }
+
+   // public ICollection<ServiceOperation> Operations { get; set; } = new List<ServiceOperation>();
+   // public ICollection<AggregateStep> AggregateSteps { get; set; } = new List<AggregateStep>();
+
     /// <summary>
     /// لیست مپینگ ورودی ها
     /// </summary>

@@ -1,4 +1,6 @@
-﻿namespace ServiceAggregator.Api.Dto;
+﻿using ServiceAggregator.Api.Models;
+
+namespace ServiceAggregator.Api.Dto;
 public class  AddAggregateStepMapping
 {
     /// <summary>
@@ -37,4 +39,9 @@ public class  AddAggregateStepMapping
     /// وضعیت
     /// </summary>
     public bool Status { get; set; } = true;
+
+   // public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+   // public AggregateStep Step { get; set; } = null!;
+   // public AggregateStep? InputStep { get; set; }
 }

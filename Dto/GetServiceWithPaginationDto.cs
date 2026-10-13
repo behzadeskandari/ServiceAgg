@@ -1,4 +1,6 @@
-﻿namespace ServiceAggregator.Api.Dto
+﻿using ServiceAggregator.Api.Models;
+
+namespace ServiceAggregator.Api.Dto
 {
     public class GetServiceWithPaginationDto
     {
@@ -42,5 +44,6 @@
         /// فرمت احراز هویت
         /// </summary>
         public string? AuthenticationFormat { get; set; }
+        public List<ServiceMapping> Mappings { get; internal set; }
     }
 }

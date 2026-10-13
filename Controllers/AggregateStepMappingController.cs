@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ServiceAggregator.Api.Data;
 using ServiceAggregator.Api.Dto;
@@ -13,6 +14,7 @@ namespace ServiceAggregator.Api.Controllers
         private readonly ServiceAggregatorContext _context;
         public AggregateStepMappingController(ServiceAggregatorContext context) => _context = context;
         [HttpPost("add")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> AddAggregateStepMapping([FromBody] AddAggregateStepMapping addAggregateStepMapping)
         {
             var newAggregateStepMapping = new AggregateStepMapping()
@@ -34,6 +36,7 @@ namespace ServiceAggregator.Api.Controllers
             return Ok(newAggregateStepMapping);
         }
         [HttpPost("update")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateAggregateStepMapping([FromBody] UpdateAggregateStepMapping updateAggregateStepMapping)
         {
             var aggregateStepMapping = await _context.AggregateStepMappings.FirstOrDefaultAsync(r => r.Id == updateAggregateStepMapping.Id);
@@ -53,6 +56,7 @@ namespace ServiceAggregator.Api.Controllers
             return Ok(updateAggregateStepMapping);
         }
         [HttpPost("delete")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteAggregateStepMapping([FromBody] DeleteAggregateStepMapping deleteAggregateStepMapping)
         {
             var aggregateStepMapping = await _context.AggregateStepMappings.FirstOrDefaultAsync(r => r.Id == deleteAggregateStepMapping.Id);

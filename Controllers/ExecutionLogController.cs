@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ServiceAggregator.Api.Data;
 using ServiceAggregator.Api.Models;
@@ -15,6 +16,7 @@ namespace ServiceAggregator.Api.Controllers
             _context = context;
         }
         [HttpGet("get/{trackerid:guid}")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<List<ExecutionLog>>> GetLogs(Guid trackerid)
         {
             return await _context.ExecutionLogs

@@ -1,10 +1,13 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Linq;
+using System.Net;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ServiceAggregator.Api.Data;
 using ServiceAggregator.Api.Dto;
 using ServiceAggregator.Api.Helpers;
+using ServiceAggregator.Api.Migrations;
 using ServiceAggregator.Api.Models;
-using System.Net;
 
 namespace ServiceAggregator.Api.Controllers
 {
@@ -16,9 +19,11 @@ namespace ServiceAggregator.Api.Controllers
 
         [HttpGet("get")]
         [ProducesResponseType(typeof(PaginatedList<GetServiceWithPaginationDto>), (int)HttpStatusCode.OK)]
+        [Authorize(Roles = "Admin")]
         public Task<PaginatedList<GetServiceWithPaginationDto>> GetServices([FromQuery] GetServiceWithPaginationQuery getServiceWithPaginationQuery, CancellationToken cancellationToken)
         {
             var query = _context.Services.AsQueryable();
+
             if (getServiceWithPaginationQuery.Name != null)
             {
                 query = query.Where(r => r.Name.Contains(getServiceWithPaginationQuery.Name));
@@ -31,6 +36,23 @@ namespace ServiceAggregator.Api.Controllers
             {
                 query = query.Where(r => r.Status == getServiceWithPaginationQuery.Status);
             }
+            //var serviceIds = getServiceWithPaginationQuery.Inputs
+            //.Select(input => input.ServiceId)
+            //.ToList();
+
+            //List<ServiceMapping> mappingService = new List<ServiceMapping>();
+            //var hasMappings = _context.ServiceMappings
+            //    .Any(mapping => serviceIds.Contains(mapping.ServiceId));
+
+            //if (hasMappings)
+            //{
+            //    mappingService = _context.ServiceMappings.Where(mapping => serviceIds.Contains(mapping.ServiceId))
+            //        .Select(mapping => mapping)
+            //        .Distinct()
+            //        .ToList();
+
+
+            //}
             if (getServiceWithPaginationQuery.CreateDate != null)
             {
                 var createDate = getServiceWithPaginationQuery.CreateDate.Value.Date;
@@ -43,6 +65,7 @@ namespace ServiceAggregator.Api.Controllers
                     Name = s.Name,
                     Url = s.Url,
                     Method = s.Method,
+                    //Mappings = mappingService,
                     Type = s.Type,
                     Status = s.Status,
                     CreateDate = s.CreateDate,
@@ -76,6 +99,7 @@ namespace ServiceAggregator.Api.Controllers
             return Ok(result);
         }
         [HttpPost("create")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> CreateService([FromBody] CreateService createService)
         {
             var newService = new Service()
@@ -95,6 +119,7 @@ namespace ServiceAggregator.Api.Controllers
             return Ok(newService);
         }
         [HttpPost("update")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateService([FromBody] UpdateService updateService)
         {
             var service = await _context.Services.FirstOrDefaultAsync(r => r.Id == updateService.Id);
@@ -112,6 +137,7 @@ namespace ServiceAggregator.Api.Controllers
             return Ok(service);
         }
         [HttpPost("delete")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteService([FromBody] DeleteService deleteService)
         {
             var service = await _context.Services.FirstOrDefaultAsync(r => r.Id == deleteService.Id);

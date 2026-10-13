@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ServiceAggregator.Api.Data;
 using ServiceAggregator.Api.Dto;
@@ -13,6 +14,7 @@ namespace ServiceAggregator.Api.Controllers
         private readonly ServiceAggregatorContext _context;
         public StepController(ServiceAggregatorContext context) => _context = context;
         [HttpPost("add")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> AddAggregateStep([FromBody] AddAggregateStep addAggregateStep)
         {
             var newAggregateStep = new AggregateStep()
@@ -36,6 +38,7 @@ namespace ServiceAggregator.Api.Controllers
             return Ok(newAggregateStep);
         }
         [HttpPost("update")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateAggregateStep([FromBody] UpdateAggregateStep updateAggregateStep)
         {
             var aggregateStep = await _context.AggregateSteps.FirstOrDefaultAsync(r => r.Id == updateAggregateStep.Id);
@@ -57,6 +60,7 @@ namespace ServiceAggregator.Api.Controllers
             return Ok(aggregateStep);
         }
         [HttpPost("delete")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteAggregateStep([FromBody] DeleteAggregateStep deleteAggregateStep)
         {
             var aggregateStep = await _context.AggregateSteps.FirstOrDefaultAsync(r => r.Id == deleteAggregateStep.Id);

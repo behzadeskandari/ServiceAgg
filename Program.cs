@@ -1,13 +1,15 @@
+﻿using System.Net;
+using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using Polly;
+using Polly.Extensions.Http;
+using QuestPDF.Drawing;
 using ServiceAggregator.Api.Data;
 using ServiceAggregator.Api.Models;
 using ServiceAggregator.Api.Services;
-using Polly;
-using Polly.Extensions.Http;
-using System.Net;
-using System.Text;
 
 var d = DateTimeOffset.Now.ToUnixTimeMilliseconds();
 var builder = WebApplication.CreateBuilder(args);
@@ -31,7 +33,35 @@ builder.Services.AddControllers();
     //            HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
     //    });
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "ServiceAggregator API", Version = "v1" });
+
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "فقط خود توکن را وارد کنید (بدون کلمه Bearer)."
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
 builder.Services.AddHealthChecks();
 var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>();
 
@@ -51,6 +81,11 @@ builder.Services
         };
     });
 
+
+
+
+
+//FontManager.RegisterFont(File.OpenRead(@"C:\Windows\Fonts\segoeui.ttf"));
 builder.Services.AddAuthorization();
 builder.Services.AddCors(options =>
 {
@@ -97,7 +132,7 @@ static IAsyncPolicy<HttpResponseMessage> GetCircuitBreakerPolicy()
 }
 builder.Services.AddHttpClient("AggregateClient", client =>
     {
-        client.Timeout = TimeSpan.FromSeconds(30);
+        client.Timeout = TimeSpan.FromSeconds(180);
     })
     .AddPolicyHandler(GetRetryPolicy())
     .AddPolicyHandler(GetCircuitBreakerPolicy()); 
@@ -107,13 +142,9 @@ app.UseSwagger();
 app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
-
-app.UseAuthentication();
-
-app.UseAuthorization();
-
 app.UseCors("AllowAll");
-
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapControllers();
 
 app.UseHealthChecks("/health");

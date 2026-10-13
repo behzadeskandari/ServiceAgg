@@ -65,6 +65,8 @@ public class AggregateStep
     /// تاریخ تغییر
     /// </summary>
     public DateTime? UpdateDate { get; set; }
+   // public Aggregate Aggregate { get; set; } = null!;
+   // public ServiceOperation? ServiceOperation { get; set; }
 
 
 }

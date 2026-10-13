@@ -21,10 +21,7 @@ public class Aggregate
     /// وضعیت
     /// </summary>
     public bool Status { get; set; } = true;
-    /// <summary>
-    /// لیست مراحل ترکیب
-    /// </summary>
-    public List<AggregateStep>? Steps { get; set; } = new();
+
     /// <summary>
     /// تاریخ ایجاد
     /// </summary>
@@ -33,6 +30,15 @@ public class Aggregate
     /// تاریخ تغییر
     /// </summary>
     public DateTime? UpdateDate { get; set; }
+
+    //public ServiceOperation? ServiceOperation { get; set; }
+
+    //public AggregateStep? FirstStep { get; set; }
+    /// <summary>
+    /// لیست مراحل ترکیب
+    /// </summary>
+    public List<AggregateStep> Steps { get; set; } = new List<AggregateStep>();
+
     /// <summary>
     /// لیست مپینگ
     /// </summary>

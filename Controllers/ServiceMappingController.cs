@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ServiceAggregator.Api.Data;
 using ServiceAggregator.Api.Dto;
@@ -13,6 +14,7 @@ namespace ServiceAggregator.Api.Controllers
         private readonly ServiceAggregatorContext _context;
         public ServiceMappingController(ServiceAggregatorContext context) => _context = context;
         [HttpPost("add")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> AddServiceMapping([FromBody] AddServiceMapping addServiceMapping)
         {
             var newServiceMapping = new ServiceMapping()
@@ -32,6 +34,7 @@ namespace ServiceAggregator.Api.Controllers
             return Ok(newServiceMapping);
         }
         [HttpPost("update")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateServiceMapping([FromBody] UpdateServiceMapping updateServiceMapping)
         {
             var serviceMapping = await _context.ServiceMappings.FirstOrDefaultAsync(r => r.Id == updateServiceMapping.Id);
@@ -48,6 +51,7 @@ namespace ServiceAggregator.Api.Controllers
             return Ok(serviceMapping);
         }
         [HttpPost("delete")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteServiceMapping([FromBody] DeleteServiceMapping deleteServiceMapping)
         {
             var serviceMapping = await _context.ServiceMappings.FirstOrDefaultAsync(r => r.Id == deleteServiceMapping.Id);

@@ -1,12 +1,13 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Net;
+using System.Threading;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ServiceAggregator.Api.Data;
 using ServiceAggregator.Api.Dto;
 using ServiceAggregator.Api.Helpers;
 using ServiceAggregator.Api.Models;
 using SkiaSharp;
-using System.Net;
-using System.Threading;
 
 namespace ServiceAggregator.Api.Controllers;
 [ApiController]
@@ -20,6 +21,7 @@ public class AggregateController : ControllerBase
     /// </summary>
     /// <param name="id"></param>
     /// <returns></returns>
+    [Authorize(Roles = "Admin")]
     [HttpGet("get/{id:guid}")]
     public async Task<ActionResult<Aggregate>> GetAggregate(Guid id)
     {
@@ -48,26 +50,78 @@ public class AggregateController : ControllerBase
     /// <param name="getAggregateWithPaginationQuery"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+    //[HttpGet("get")]
+    //[Authorize(Roles = "Admin")]
+    //[ProducesResponseType(typeof(PaginatedList<GetAggregateWithPaginationDto>), (int)HttpStatusCode.OK)]
+    //public Task<PaginatedList<GetAggregateWithPaginationDto>> GetAggregates([FromQuery] GetAggregateWithPaginationQuery getAggregateWithPaginationQuery, CancellationToken cancellationToken)
+    //{
+    //    var query = _context.Aggregates.AsQueryable();
+    //    if (getAggregateWithPaginationQuery.Name != null)
+    //    {
+    //        query = query.Where(r => r.Name.Contains(getAggregateWithPaginationQuery.Name));
+    //    }
+    //    if (getAggregateWithPaginationQuery.Status != null)
+    //    {
+    //        query = query.Where(r => r.Status == getAggregateWithPaginationQuery.Status);
+    //    }
+    //    if (getAggregateWithPaginationQuery.CreateDate != null)
+    //    {
+    //        var createDate = getAggregateWithPaginationQuery.CreateDate.Value.Date;
+    //        query = query.Where(r => r.CreateDate.Value.ToLocalTime() >= createDate && r.CreateDate.Value.ToLocalTime() < createDate.AddDays(1));
+    //    }
+    //    return query.OrderByDescending(r => r.CreateDate).
+    //        Select(x => new GetAggregateWithPaginationDto()
+    //        {
+    //            Id = x.Id,
+    //            Name = x.Name,
+    //            Status = x.Status,
+    //            CreateDate = x.CreateDate,
+    //            UpdateDate = x.UpdateDate,
+    //            Description = x.Description,
+    //            FirstStepId = x.FirstStepId
+    //        }).PaginatedListAsync(getAggregateWithPaginationQuery.PageIndex, getAggregateWithPaginationQuery.PageSize, cancellationToken);
+    //}
+
+
+
     [HttpGet("get")]
-    [ProducesResponseType(typeof(PaginatedList<GetAggregateWithPaginationDto>), (int)HttpStatusCode.OK)]
-    public Task<PaginatedList<GetAggregateWithPaginationDto>> GetAggregates([FromQuery] GetAggregateWithPaginationQuery getAggregateWithPaginationQuery, CancellationToken cancellationToken)
+    [Authorize(Roles = "Admin")]
+    [ProducesResponseType(
+        typeof(PaginatedList<GetAggregateWithPaginationDto>),
+        (int)HttpStatusCode.OK)]
+    public Task<PaginatedList<GetAggregateWithPaginationDto>> GetAggregates(
+        [FromQuery] GetAggregateWithPaginationQuery getAggregateWithPaginationQuery,
+        CancellationToken cancellationToken)
     {
-        var query = _context.Aggregates.AsQueryable();
+        var query = _context.Aggregates
+            .AsNoTracking()
+            .AsQueryable();
+
         if (getAggregateWithPaginationQuery.Name != null)
         {
-            query = query.Where(r => r.Name.Contains(getAggregateWithPaginationQuery.Name));
+            query = query.Where(r =>
+                r.Name.Contains(getAggregateWithPaginationQuery.Name));
         }
+
         if (getAggregateWithPaginationQuery.Status != null)
         {
-            query = query.Where(r => r.Status == getAggregateWithPaginationQuery.Status);
+            query = query.Where(r =>
+                r.Status == getAggregateWithPaginationQuery.Status);
         }
+
         if (getAggregateWithPaginationQuery.CreateDate != null)
         {
-            var createDate = getAggregateWithPaginationQuery.CreateDate.Value.Date;
-            query = query.Where(r => r.CreateDate.Value.ToLocalTime() >= createDate && r.CreateDate.Value.ToLocalTime() < createDate.AddDays(1));
+            var createDate =
+                getAggregateWithPaginationQuery.CreateDate.Value.Date;
+
+            query = query.Where(r =>
+                r.CreateDate.Value.ToLocalTime() >= createDate &&
+                r.CreateDate.Value.ToLocalTime() < createDate.AddDays(1));
         }
-        return query.OrderByDescending(r => r.CreateDate).
-            Select(x => new GetAggregateWithPaginationDto()
+
+        return query
+            .OrderByDescending(r => r.CreateDate)
+            .Select(x => new GetAggregateWithPaginationDto
             {
                 Id = x.Id,
                 Name = x.Name,
@@ -75,8 +129,52 @@ public class AggregateController : ControllerBase
                 CreateDate = x.CreateDate,
                 UpdateDate = x.UpdateDate,
                 Description = x.Description,
-                FirstStepId = x.FirstStepId
-            }).PaginatedListAsync(getAggregateWithPaginationQuery.PageIndex, getAggregateWithPaginationQuery.PageSize, cancellationToken);
+                FirstStepId = x.FirstStepId,
+
+                Steps = x.Steps
+                    .Where(s => s.Status)
+                    .Select(s => new AggregateStepDto
+                    {
+                        Id = s.Id,
+                        AggregateId = s.AggregateId,
+                        StepName = s.StepName,
+
+                        ServiceId = s.ServiceId,
+
+                        NextStepId = s.NextStepId,
+                        TrueStepId = s.TrueStepId,
+                        FalseStepId = s.FalseStepId,
+
+                        Condition = s.Condition,
+                        ConditionParameters = s.ConditionParameters,
+
+                        Status = s.Status,
+
+                        Mappings = s.Mappings
+                            .Where(m => m.Status)
+                            .Select(m => new AggregateStepMappingDto
+                            {
+                                Id = m.Id,
+                                AggregateStepId = m.AggregateStepId,
+                                InputStepId = m.InputStepId,
+
+                                MappingType = m.MappingType,
+                                Source = m.Source,
+                                SourceField = m.SourceField,
+                                TargetField = m.TargetField,
+                                Value = m.Value,
+                                ValueType = m.ValueType,
+
+                                Status = m.Status
+                            })
+                            .ToList()
+                    })
+                    .ToList()
+            })
+            .PaginatedListAsync(
+                getAggregateWithPaginationQuery.PageIndex,
+                getAggregateWithPaginationQuery.PageSize,
+                cancellationToken);
     }
     /// <summary>
     /// یک ترکیب جدید می سازد
@@ -84,6 +182,7 @@ public class AggregateController : ControllerBase
     /// <param name="createAggregate"></param>
     /// <returns></returns>
     [HttpPost("create")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> CreateAggregate([FromBody] CreateAggregate createAggregate)
     {
         var newAggregate = new Aggregate()
@@ -104,6 +203,7 @@ public class AggregateController : ControllerBase
     /// <param name="updateAggregate"></param>
     /// <returns></returns>
     [HttpPost("update")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> UpdateAggregate([FromBody] UpdateAggregate updateAggregate)
     {
         var aggregate = await _context.Aggregates.FirstOrDefaultAsync(r => r.Id == updateAggregate.Id);
@@ -123,20 +223,62 @@ public class AggregateController : ControllerBase
     /// <param name="deleteAggregate"></param>
     /// <returns></returns>
     [HttpPost("delete")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> DeleteAggregate([FromBody] DeleteAggregate deleteAggregate)
     {
-        var aggregate = await _context.Aggregates.FirstOrDefaultAsync(r => r.Id == deleteAggregate.Id);
+        var aggregate = await _context.Aggregates
+        .FirstOrDefaultAsync(r => r.Id == deleteAggregate.Id);
+
         if (aggregate == null)
             return NotFound();
-        _context.Aggregates.Remove(aggregate);
-        var steps = _context.AggregateSteps.Where(r => r.AggregateId == deleteAggregate.Id).ToList();
-        _context.AggregateSteps.RemoveRange(steps);
-        foreach (var step in steps)
+
+        // Delete AggregateMappings first
+        var aggregateMappings = await _context.AggregateMappings
+            .Where(r => r.AggregateId == deleteAggregate.Id)
+            .ToListAsync();
+
+        _context.AggregateMappings.RemoveRange(aggregateMappings);
+
+        // Get all steps
+        var steps = await _context.AggregateSteps
+            .Where(r => r.AggregateId == deleteAggregate.Id)
+            .ToListAsync();
+
+        // Delete StepMappings
+        if (steps.Count > 0)
         {
-            var stepMappings = _context.AggregateStepMappings.Where(r => r.AggregateStepId == step.Id).ToList();
+            var stepIds = steps
+                .Select(s => s.Id)
+                .ToList();
+
+            var stepMappings = await _context.AggregateStepMappings
+                .Where(r => stepIds.Contains(r.AggregateStepId))
+                .ToListAsync();
+
             _context.AggregateStepMappings.RemoveRange(stepMappings);
         }
+
+        // Delete steps
+        _context.AggregateSteps.RemoveRange(steps);
+
+        // Finally delete aggregate
+        _context.Aggregates.Remove(aggregate);
+
         await _context.SaveChangesAsync();
+
         return Ok(deleteAggregate);
+        //var aggregate = await _context.Aggregates.FirstOrDefaultAsync(r => r.Id == deleteAggregate.Id);
+        //if (aggregate == null)
+        //    return NotFound();
+        //_context.Aggregates.Remove(aggregate);
+        //var steps = _context.AggregateSteps.Where(r => r.AggregateId == deleteAggregate.Id).ToList();
+        //_context.AggregateSteps.RemoveRange(steps);
+        //foreach (var step in steps)
+        //{
+        //    var stepMappings = _context.AggregateStepMappings.Where(r => r.AggregateStepId == step.Id).ToList();
+        //    _context.AggregateStepMappings.RemoveRange(stepMappings);
+        //}
+        //await _context.SaveChangesAsync();
+        //return Ok(deleteAggregate);
     }
 }
