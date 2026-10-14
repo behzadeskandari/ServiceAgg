@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using ServiceAggregator.Api.Data;
 using ServiceAggregator.Api.Dto;
 using ServiceAggregator.Api.Models;
+using ServiceAggregator.Api.Services;
 
 namespace ServiceAggregator.Api.Controllers
 {
@@ -12,7 +13,25 @@ namespace ServiceAggregator.Api.Controllers
     public class ServiceMappingController : ControllerBase
     {
         private readonly ServiceAggregatorContext _context;
-        public ServiceMappingController(ServiceAggregatorContext context) => _context = context;
+        private readonly IServiceMappingService _serviceMappingService;
+        public ServiceMappingController(ServiceAggregatorContext context, IServiceMappingService serviceMappingService)
+        {
+            _context = context;
+            _serviceMappingService = serviceMappingService;
+        }
+
+        [HttpGet("get/{serviceId:guid}")]
+        public async Task<IActionResult> GetByServiceId(Guid serviceId)
+        {
+            var result = await _serviceMappingService.GetByServiceIdAsync(serviceId);
+
+            if (result == null || !result.Any())
+                return Ok(new List<ServiceMappingDto>()); // return empty list instead of 404
+
+            return Ok(result);
+        }
+
+
         [HttpPost("add")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> AddServiceMapping([FromBody] AddServiceMapping addServiceMapping)

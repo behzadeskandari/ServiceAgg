@@ -22,16 +22,17 @@ builder.Services.AddSingleton<JwtService>();
 builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<SkiaSharpCaptchaService>();
 builder.Services.AddControllers();
+builder.Services.AddScoped<IServiceMappingService, ServiceMappingService>();
 //var proxy = new WebProxy("http://127.0.0.1:8888");
 //builder.Services.AddHttpClient();
-    //.ConfigurePrimaryHttpMessageHandler(() =>
-    //    new HttpClientHandler
-    //    {
-    //        Proxy = proxy,
-    //        UseProxy = true,
-    //        ServerCertificateCustomValidationCallback =
-    //            HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-    //    });
+//.ConfigurePrimaryHttpMessageHandler(() =>
+//    new HttpClientHandler
+//    {
+//        Proxy = proxy,
+//        UseProxy = true,
+//        ServerCertificateCustomValidationCallback =
+//            HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+//    });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
