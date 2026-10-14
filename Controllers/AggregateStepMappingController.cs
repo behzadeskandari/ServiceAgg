@@ -13,6 +13,45 @@ namespace ServiceAggregator.Api.Controllers
     {
         private readonly ServiceAggregatorContext _context;
         public AggregateStepMappingController(ServiceAggregatorContext context) => _context = context;
+
+        /// <summary>
+        /// Get all mappings for a specific Aggregate Step
+        /// </summary>
+        [HttpGet("get-by-step/{aggregateStepId:guid}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetByStepId(Guid aggregateStepId)
+        {
+            var mappings = await _context.AggregateStepMappings
+                .AsNoTracking()
+                .Where(x => x.AggregateStepId == aggregateStepId && x.Status)
+                .OrderBy(x => x.CreateDate)
+                .ToListAsync();
+
+            return Ok(mappings);
+        }
+
+        /// <summary>
+        /// Get all mappings for an entire Aggregate (all steps)
+        /// </summary>
+        [HttpGet("get-by-aggregate/{aggregateId:guid}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetByAggregateId(Guid aggregateId)
+        {
+            var stepIds = await _context.AggregateSteps
+                .AsNoTracking()
+                .Where(s => s.AggregateId == aggregateId)
+                .Select(s => s.Id)
+                .ToListAsync();
+
+            var mappings = await _context.AggregateStepMappings
+                .AsNoTracking()
+                .Where(x => stepIds.Contains(x.AggregateStepId) && x.Status)
+                .OrderBy(x => x.CreateDate)
+                .ToListAsync();
+
+            return Ok(mappings);
+        }
+
         [HttpPost("add")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> AddAggregateStepMapping([FromBody] AddAggregateStepMapping addAggregateStepMapping)

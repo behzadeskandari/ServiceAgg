@@ -422,7 +422,12 @@ public static class MapperHelper
                     }
             }
 
-            result[map.TargetField] = value;
+            //result[map.TargetField] = value;
+
+            if (!string.IsNullOrWhiteSpace(map.TargetField))
+            {
+                SetNestedValue(result, map.TargetField, value);
+            }
         }
 
         return result;
@@ -789,6 +794,79 @@ public static class MapperHelper
         };
     }
 
+    /// <summary>
+    /// Sets a value into a nested dictionary structure using paths like:
+    /// ClientBatchID
+    /// PostCodes[0].ClientRowID
+    /// result.user.name
+    /// </summary>
+    private static void SetNestedValue(
+        Dictionary<string, object?> root,
+        string path,
+        object? value)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+            return;
+
+        var tokens = TokenizePath(path).ToList();
+        object current = root;
+
+        for (int i = 0; i < tokens.Count; i++)
+        {
+            var token = tokens[i];
+            var isLast = i == tokens.Count - 1;
+
+            if (token.IsArrayIndex)
+            {
+                if (current is not List<object?> list)
+                    return;
+
+                while (list.Count <= token.ArrayIndex)
+                    list.Add(null);
+
+                if (isLast)
+                {
+                    list[token.ArrayIndex] = value;
+                }
+                else
+                {
+                    if (list[token.ArrayIndex] == null)
+                    {
+                        // next token decides whether we need a dict or another list
+                        var next = tokens[i + 1];
+                        list[token.ArrayIndex] = next.IsArrayIndex
+                            ? new List<object?>()
+                            : new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+                    }
+                    current = list[token.ArrayIndex]!;
+                }
+            }
+            else
+            {
+                if (current is not Dictionary<string, object?> dict)
+                    return;
+
+                var key = token.Name!;
+
+                if (isLast)
+                {
+                    dict[key] = value;
+                }
+                else
+                {
+                    if (!dict.TryGetValue(key, out var nextObj) || nextObj == null)
+                    {
+                        var next = tokens[i + 1];
+                        nextObj = next.IsArrayIndex
+                            ? new List<object?>()
+                            : new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+                        dict[key] = nextObj;
+                    }
+                    current = nextObj!;
+                }
+            }
+        }
+    }
     private sealed class PathToken
     {
         public string? Name { get; init; }
